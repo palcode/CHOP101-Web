@@ -10,5 +10,11 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    # Address fields
+    street_address = Column(String)
+    city = Column(String)
+    state = Column(String)
+    country = Column(String)
+    postal_code = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now()) 
