@@ -40,9 +40,12 @@ This document introduces the concept of Chat-Oriented Programming (CHOP), where 
 
 >“Can you help apply them ?”
 
-### **Use Case 6 : Debugging  [Will be shown in live ]**
+### **Use Case 7 : Try to add long extended feature request**
 
-### **Use Case 7 : Code Completion [Will be shown in live ]**
+**Prompt in Cursor:**
+>Use this code and convert into backend microservice using docker and create a testing frontend in react where user can login via google oauth, and users can manage thier details after login, In future this this is going to be part of a ecommerce application @codebase
+
+>Update the readme with proper instruction on build and test complete application @Codebase
 
 
 ---
