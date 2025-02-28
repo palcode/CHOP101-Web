@@ -1,3 +1,17 @@
+"""FastAPI User Management API with CRUD operations.
+
+This module implements a RESTful API for user management with the following features:
+- User creation with password hashing
+- User retrieval with filtering options
+- User updates with partial update support
+- User deletion
+- Address management
+- Input validation using Pydantic
+- SQLite database with SQLAlchemy ORM
+
+The API includes proper error handling, validation, and follows REST best practices.
+"""
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from . import models, schemas, database
@@ -18,6 +32,21 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # CRUD Operations
 @app.post("/users/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    """Create a new user.
+    
+    Creates a new user with the provided information, including address details.
+    Performs validation for unique email and username, and hashes the password.
+    
+    Args:
+        user (UserCreate): User data including email, username, password, and address
+        db (Session): Database session dependency
+    
+    Returns:
+        User: Created user information
+    
+    Raises:
+        HTTPException: If email or username already exists
+    """
     # Check if email exists
     db_user = db.query(models.User).filter(
         models.User.email == user.email
@@ -63,6 +92,21 @@ def read_users(
     country: Optional[str] = None,
     db: Session = Depends(database.get_db)
 ):
+    """Retrieve users with optional filtering.
+    
+    Gets a list of users with pagination support and optional location-based filtering.
+    
+    Args:
+        skip (int): Number of records to skip (default: 0)
+        limit (int): Maximum number of records to return (default: 100)
+        city (str, optional): Filter by city
+        state (str, optional): Filter by state
+        country (str, optional): Filter by country
+        db (Session): Database session dependency
+    
+    Returns:
+        List[User]: List of users matching the criteria
+    """
     query = db.query(models.User)
     
     # Apply filters if provided
@@ -78,6 +122,18 @@ def read_users(
 
 @app.get("/users/{user_id}", response_model=schemas.User)
 def read_user(user_id: int, db: Session = Depends(database.get_db)):
+    """Retrieve a specific user by ID.
+    
+    Args:
+        user_id (int): ID of the user to retrieve
+        db (Session): Database session dependency
+    
+    Returns:
+        User: User information
+    
+    Raises:
+        HTTPException: If user is not found
+    """
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
         raise HTTPException(
@@ -92,6 +148,22 @@ def update_user(
     user: schemas.UserUpdate,
     db: Session = Depends(database.get_db)
 ):
+    """Update a user's information.
+    
+    Supports partial updates of user information. Only provided fields will be updated.
+    Validates email and username uniqueness if they are being updated.
+    
+    Args:
+        user_id (int): ID of the user to update
+        user (UserUpdate): Updated user data
+        db (Session): Database session dependency
+    
+    Returns:
+        User: Updated user information
+    
+    Raises:
+        HTTPException: If user is not found or if email/username is already taken
+    """
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
         raise HTTPException(
@@ -134,6 +206,18 @@ def update_user(
 
 @app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int, db: Session = Depends(database.get_db)):
+    """Delete a user.
+    
+    Args:
+        user_id (int): ID of the user to delete
+        db (Session): Database session dependency
+    
+    Raises:
+        HTTPException: If user is not found
+    
+    Returns:
+        None
+    """
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
         raise HTTPException(
