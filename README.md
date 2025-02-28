@@ -256,3 +256,8 @@ docker-compose up --build
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Purpose 
+This entire code is written by AI using Cursor as explained below .
+--- 
+![Alt text](Chat_Oriented_Programming.md)
