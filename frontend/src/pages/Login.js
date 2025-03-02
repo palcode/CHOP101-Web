@@ -1,77 +1,74 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
-import { Box, Button, Container, Typography, Paper } from '@mui/material';
-import { Google as GoogleIcon } from '@mui/icons-material';
+import { GoogleLogin } from '@react-oauth/google';
+import { Box, Typography, Paper } from '@mui/material';
+import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
-import { useDispatch } from 'react-redux';
-import { loginUser } from '../store/authSlice';
-import api from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const { login } = useAuth();
 
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (response) => {
-      try {
-        // Send the token to your backend
-        const { data } = await api.post('/auth/google', {
-          token: response.access_token,
-        });
+  const handleSuccess = async (credentialResponse) => {
+    try {
+      console.log('Google OAuth response:', credentialResponse);
+      const response = await fetch('http://localhost:8000/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+        }),
+      });
 
-        // Store the token and user info
-        dispatch(loginUser(data));
-        toast.success('Successfully logged in!');
-        navigate('/profile');
-      } catch (error) {
-        console.error('Login failed:', error);
-        toast.error('Login failed. Please try again.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Login error:', errorData);
+        throw new Error(errorData.detail || 'Login failed');
       }
-    },
-    onError: () => {
-      toast.error('Login failed. Please try again.');
-    },
-  });
+
+      const data = await response.json();
+      console.log('Login success:', data);
+      login(data.token, data.user);
+      toast.success('Successfully logged in!');
+      navigate('/profile');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Login failed. Please try again.');
+    }
+  };
+
+  const handleError = () => {
+    console.error('Google OAuth error');
+    toast.error('Login failed. Please try again.');
+  };
 
   return (
-    <Container maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h5" gutterBottom>
-            Welcome to User Management
-          </Typography>
-          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            Please sign in with your Google account to continue
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<GoogleIcon />}
-            onClick={() => handleGoogleLogin()}
-            size="large"
-            sx={{ mt: 2 }}
-          >
-            Sign in with Google
-          </Button>
-        </Paper>
-      </Box>
-    </Container>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '80vh',
+      }}
+    >
+      <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h5" component="h1" gutterBottom>
+          Welcome to User Management
+        </Typography>
+        <Typography variant="body1" gutterBottom sx={{ mb: 3 }}>
+          Please sign in with your Google account
+        </Typography>
+        <GoogleLogin
+          onSuccess={handleSuccess}
+          onError={handleError}
+          useOneTap
+          flow="implicit"
+          auto_select={false}
+        />
+      </Paper>
+    </Box>
   );
 };
 
